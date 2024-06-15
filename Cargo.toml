@@ -5,3 +5,4 @@ edition = "2021"
 
 [dependencies]
 postgres = "0.19.7"
+sha-crypt = "0.5.0"

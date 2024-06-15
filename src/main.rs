@@ -1,3 +1,5 @@
+use sha_crypt::{sha512_check,sha512_simple,Sha512Params};
+
 #[derive(Debug)]
 struct User{
     id:i32,
@@ -9,11 +11,18 @@ struct User{
 
 impl User {
     fn new(
-           username:String,
-           password:String,
-           first_name:Option<String>,
-           last_name:Option<String>
-    )->User{
+        username:String,
+        mut password:String,
+        first_name:Option<String>,
+        last_name:Option<String>
+    ) ->User{
+        if !password.is_empty() {
+            let params =
+                Sha512Params::new(10_000).expect("Random error");
+            password =
+                sha512_simple(&*password, &params).expect("Should not fail");
+            assert!(sha512_check("password", &password).is_ok());
+        }
         let mut user = User{
             id: 0,
             first_name: None,
