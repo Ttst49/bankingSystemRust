@@ -1,4 +1,4 @@
-use std::io::{Read, stdin};
+use std::io::{stdin};
 use sha_crypt::{sha512_simple, Sha512Params};
 use postgres;
 use postgres::{Client, NoTls};
@@ -15,7 +15,7 @@ struct User{
 
 impl User {
     fn new(
-        mut client: Client,
+        mut client:&mut Client,
         username:String,
         mut password:String,
         first_name:Option<String>,
@@ -59,9 +59,36 @@ impl User {
         }
         user
     }
+
+    fn register(user: &Option<User>, client: &mut Client) ->User{
+        let mut first_name = String::new();
+        let mut last_name = String::new();
+        println!("What username for you new user ?");
+        let mut username = String::new();
+        stdin().read_line(&mut username).unwrap();
+        println!("What password for you new user ?");
+        let mut password = String::new();
+        stdin().read_line(&mut password).unwrap();
+        println!("Do you want to specify first name?");
+        let mut choice = String::new();
+        stdin().read_line(&mut choice).unwrap();
+        if choice.as_str().trim() == "yes" {
+            println!("What first name for you new user ?");
+            stdin().read_line(&mut first_name).unwrap();
+        }
+        println!("Do you want to specify last name?");
+        let mut choice = String::new();
+        stdin().read_line(&mut choice).unwrap();
+        if choice.as_str().trim() == "yes" {
+            println!("What last name for you new user ?");
+            stdin().read_line(&mut last_name).unwrap();
+        }
+        User::new(client, username, password, Some(first_name), Some(last_name));
+        select_option(user,client)
+    }
 }
 
-fn show_menu(user: &Option<User>){
+fn show_menu(user: &Option<User>,client: &Client){
     if user.is_none() {
         println!(
             "\n
@@ -88,15 +115,28 @@ fn show_menu(user: &Option<User>){
 
 }
 
-fn select_option(user: &Option<User>){
+fn select_option(user: &Option<User>, mut client: &mut Client) ->User{
     let mut choice = String::new();
     stdin().read_line(&mut choice).expect("Mauvaise saisie");
     if user.is_none() {
         match choice.as_str().trim() {
-            "1"=>show_menu(&user),
+            "1"=>User::register(&user,&mut client),
             _ => {
                 println!("Choisissez un nombre valide");
-                select_option(&user)
+                select_option(&user,client)
+            }
+        }
+    }else {
+        match choice.as_str().trim() {
+            "1"=>User::register(&user,&mut client),
+            "2"=>User::register(&user,&mut client),
+            "3"=>User::register(&user,&mut client),
+            "4"=>User::register(&user,&mut client),
+            "5"=>User::register(&user,&mut client),
+            "6"=>User::register(&user,&mut client),
+            _ => {
+                println!("Choisissez un nombre valide");
+                select_option(&user,client)
             }
         }
     }
@@ -104,11 +144,10 @@ fn select_option(user: &Option<User>){
 
 fn main() {
     let current_user:Option<User> = None;
-    let client =
+    let mut client =
         Client::connect("postgresql://bankinguser:postgres@localhost/banking",NoTls)
             .expect("No connection");
     println!("Bienvenue dans votre application bancaire !");
-    show_menu(&current_user);
-    select_option(&current_user);
-
+    show_menu(&current_user,&client);
+    select_option(&current_user,&mut client);
 }
