@@ -1,5 +1,5 @@
 use std::io::{stdin};
-use sha_crypt::{sha512_simple, Sha512Params};
+use sha_crypt::{sha512_check, sha512_simple, Sha512Params};
 use postgres;
 use postgres::{Client, NoTls};
 
@@ -15,7 +15,7 @@ struct User{
 
 impl User {
     fn new(
-        mut client:&mut Client,
+        client:&mut Client,
         username:String,
         mut password:String,
         first_name:Option<String>,
@@ -60,6 +60,12 @@ impl User {
         user
     }
 
+    fn log(client:&mut Client,
+           username:String,
+           password:String,){
+        let user = client
+    }
+
     fn register(user: &Option<User>, client: &mut Client) ->User{
         let mut first_name = String::new();
         let mut last_name = String::new();
@@ -84,6 +90,18 @@ impl User {
             stdin().read_line(&mut last_name).unwrap();
         }
         User::new(client, username, password, Some(first_name), Some(last_name));
+        select_option(user,client)
+    }
+
+    fn login(user: &Option<User>, client: &mut Client) ->User{
+        println!("Username ?");
+        let mut username = String::new();
+        stdin().read_line(&mut username).unwrap();
+        println!("Password ?");
+        let mut password = String::new();
+        stdin().read_line(&mut password).unwrap();
+
+        User::log(client, username, password);
         select_option(user,client)
     }
 }
@@ -120,7 +138,8 @@ fn select_option(user: &Option<User>, mut client: &mut Client) ->User{
     stdin().read_line(&mut choice).expect("Mauvaise saisie");
     if user.is_none() {
         match choice.as_str().trim() {
-            "1"=>User::register(&user,&mut client),
+            "1"=>User::login(&user,&mut client),
+            "2"=>User::register(&user,&mut client),
             _ => {
                 println!("Choisissez un nombre valide");
                 select_option(&user,client)
