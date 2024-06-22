@@ -2,9 +2,11 @@ use std::io::{stdin};
 use sha_crypt::{sha512_check, sha512_simple, Sha512Params};
 use postgres;
 use postgres::{Client, NoTls};
+use postgres_query::{FromSqlRow, query};
 
 
 #[derive(Debug)]
+#[derive(FromSqlRow)]
 struct User{
     id:i32,
     first_name:Option<String>,
@@ -60,13 +62,33 @@ impl User {
         user
     }
 
-    fn log(client:&mut Client,
-           username:String,
-           password:String,){
-        let user = client
+    async fn log(mut user: &Option<User>,
+                   client:&mut Client,
+                   username:String,
+                   mut password:String,){
+        let params =
+            Sha512Params::new(10_000).expect("password problem");
+        password =
+            sha512_simple(&*password, &params).expect("password problem");
+        for row in client.query("SELECT * FROM users \
+        WHERE username = $1 AND password = $2",
+                       &[
+                           &username,
+                           &password
+                       ]).expect("No return from db"){
+            let user_logged_in = User{
+                id: row.get(0),
+                first_name: row.get(1),
+                last_name: row.get(2),
+                username: row.get(3),
+                password: row.get(4),
+            };
+            println!("Hey back {}",user_logged_in.username)
+        }
+
     }
 
-    fn register(user: &Option<User>, client: &mut Client) ->User{
+    fn register(user: &Option<User>, client: &mut Client){
         let mut first_name = String::new();
         let mut last_name = String::new();
         println!("What username for you new user ?");
@@ -90,10 +112,10 @@ impl User {
             stdin().read_line(&mut last_name).unwrap();
         }
         User::new(client, username, password, Some(first_name), Some(last_name));
-        select_option(user,client)
+        show_menu(user,client)
     }
 
-    fn login(user: &Option<User>, client: &mut Client) ->User{
+    fn login(user: &Option<User>, client: &mut Client){
         println!("Username ?");
         let mut username = String::new();
         stdin().read_line(&mut username).unwrap();
@@ -101,8 +123,8 @@ impl User {
         let mut password = String::new();
         stdin().read_line(&mut password).unwrap();
 
-        User::log(client, username, password);
-        select_option(user,client)
+        User::log(user,client, username, password);
+        show_menu(user,client)
     }
 }
 
@@ -133,7 +155,7 @@ fn show_menu(user: &Option<User>,client: &Client){
 
 }
 
-fn select_option(user: &Option<User>, mut client: &mut Client) ->User{
+fn select_option(user: &Option<User>, mut client: &mut Client){
     let mut choice = String::new();
     stdin().read_line(&mut choice).expect("Mauvaise saisie");
     if user.is_none() {
