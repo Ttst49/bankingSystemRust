@@ -1,8 +1,9 @@
+use std::error::Error;
 use std::io::{stdin};
 use sha_crypt::{sha512_check, sha512_simple, Sha512Params};
 use postgres;
 use postgres::{Client, NoTls};
-use postgres_query::{FromSqlRow, query};
+use postgres_query::{FromSqlRow};
 
 
 #[derive(Debug)]
@@ -52,8 +53,8 @@ impl User {
                  (username,password,last_name,first_name) \
                  VALUES ($1,$2,$3,$4)",
                 &[
-                    &user.username,
-                    &user.password,
+                    &user.username.trim(),
+                    &user.password.trim(),
                     &user.last_name,
                     &user.first_name
                 ]
@@ -62,30 +63,37 @@ impl User {
         user
     }
 
-    async fn log(mut user: &Option<User>,
-                   client:&mut Client,
-                   username:String,
-                   mut password:String,){
-        let params =
-            Sha512Params::new(10_000).expect("password problem");
-        password =
-            sha512_simple(&*password, &params).expect("password problem");
-        for row in client.query("SELECT * FROM users \
-        WHERE username = $1 AND password = $2",
-                       &[
-                           &username,
-                           &password
-                       ]).expect("No return from db"){
-            let user_logged_in = User{
-                id: row.get(0),
-                first_name: row.get(1),
-                last_name: row.get(2),
-                username: row.get(3),
-                password: row.get(4),
-            };
-            println!("Hey back {}",user_logged_in.username)
+    fn log_into(
+        mut user: &Option<User>,
+        client: &mut Client,
+        username: String,
+        password: String,
+    ) -> Result<(), Box<dyn Error>> {
+        let row = client.query_opt(
+            "SELECT username, password FROM users WHERE username = $1",
+            &[&username.trim()],
+        )?;
+
+        match row {
+            Some(row) => {
+                let db_username: &str = row.get("username");
+                let db_password: &str = row.get("password");
+
+                match sha512_check(&password, db_password) {
+                    Ok(()) => {
+                        println!("Hello, {}", db_username);
+                    }
+                    Err(_) => {
+                        println!("Invalid username or password");
+                    }
+                }
+            }
+            None => {
+                println!("Invalid username or password");
+            }
         }
 
+        Ok(())
     }
 
     fn register(user: &Option<User>, client: &mut Client){
@@ -123,8 +131,9 @@ impl User {
         let mut password = String::new();
         stdin().read_line(&mut password).unwrap();
 
-        User::log(user,client, username, password);
-        show_menu(user,client)
+
+        User::log_into(user, client, username, password);
+        //show_menu(user,client)
     }
 }
 
