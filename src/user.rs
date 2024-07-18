@@ -63,7 +63,6 @@ impl User {
     }
 
     fn log_into(
-        mut user: &Option<User>,
         client: &mut Client,
         username: String,
         password: String,
@@ -139,7 +138,7 @@ impl User {
         stdin().read_line(&mut password).unwrap();
 
 
-        User::log_into(user, client, username, password);
+        User::log_into(client, username, password).expect("something's wrong");
         show_menu(user,client)
     }
 }
