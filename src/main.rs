@@ -4,7 +4,7 @@ use postgres;
 use postgres::{Client, NoTls};
 use crate::user::User;
 
-fn show_menu(user: &Option<User>,client: &Client){
+fn show_menu(user: &Option<User>,client: &mut Client){
     if user.is_none() {
         println!(
             "\n
@@ -28,7 +28,7 @@ fn show_menu(user: &Option<User>,client: &Client){
      "
         )
     }
-
+    select_option(user,client)
 }
 
 fn select_option(user: &Option<User>, mut client: &mut Client){
@@ -59,12 +59,13 @@ fn select_option(user: &Option<User>, mut client: &mut Client){
     }
 }
 
+
 fn main() {
     let current_user:Option<User> = None;
     let mut client =
         Client::connect("postgresql://bankinguser:postgres@localhost/banking",NoTls)
             .expect("No connection");
     println!("Bienvenue dans votre application bancaire !");
-    show_menu(&current_user,&client);
+    show_menu(&current_user, &mut client);
     select_option(&current_user,&mut client);
 }

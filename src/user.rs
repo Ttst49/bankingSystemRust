@@ -3,6 +3,7 @@ pub use std::io::stdin;
 pub use sha_crypt::{sha512_check, sha512_simple, Sha512Params};
 pub use postgres_query::{FromSqlRow};
 use postgres::{Client};
+use crate::{show_menu};
 
 #[derive(Debug)]
 #[derive(FromSqlRow)]
@@ -68,18 +69,27 @@ impl User {
         password: String,
     ) -> Result<(), Box<dyn Error>> {
         let row = client.query_opt(
-            "SELECT username, password FROM users WHERE username = $1",
+            "SELECT username, password, id FROM users WHERE username = $1",
             &[&username.trim()],
         )?;
 
         match row {
             Some(row) => {
+                let db_id = row.get("id");
                 let db_username: &str = row.get("username");
                 let db_password: &str = row.get("password");
 
                 match sha512_check(&password, db_password) {
                     Ok(()) => {
                         println!("Hello, {}", db_username);
+                        let current_user = User{
+                            id:db_id,
+                            first_name: None,
+                            last_name: None,
+                            username:db_username.to_string(),
+                            password:db_password.to_string(),
+                        };
+                        show_menu(&Some(current_user),client)
                     }
                     Err(_) => {
                         println!("Invalid username or password");
@@ -90,7 +100,6 @@ impl User {
                 println!("Invalid username or password");
             }
         }
-
         Ok(())
     }
 
@@ -111,13 +120,14 @@ impl User {
             stdin().read_line(&mut first_name).unwrap();
         }
         println!("Do you want to specify last name?(yes/no)");
-        let mut choice = String::new();g
+        let mut choice = String::new();
         stdin().read_line(&mut choice).unwrap();
         if choice.as_str().trim() == "yes" {
             println!("What last name for you new user ?");
             stdin().read_line(&mut last_name).unwrap();
         }
         User::new(client, username, password, Some(first_name), Some(last_name));
+        show_menu(user,client)
     }
 
     pub fn login(user: &Option<User>, client: &mut Client){
@@ -130,5 +140,6 @@ impl User {
 
 
         User::log_into(user, client, username, password);
+        show_menu(user,client)
     }
 }
