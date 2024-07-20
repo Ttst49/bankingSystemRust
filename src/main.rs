@@ -17,14 +17,14 @@ fn show_menu(user: &Option<User>,client: &mut Client){
     }else {
         println!(
             "\n
-        --------------------\n
-        | 1:Add a todo     |\n
-        | 2:Remove a todo  |\n
-        | 3:Edit a todo    |\n
-        | 4:Show todolist  |\n
-        | 5:Reset todolist |\n
-        | 6:Quit           |\n
-        --------------------\n
+        ---------------------------\n
+        | 1:Create bank account   |\n
+        | 2:Remove a todo         |\n
+        | 3:Edit a todo           |\n
+        | 4:Show todolist         |\n
+        | 5:Reset todolist        |\n
+        | 6:Quit                  |\n
+        ---------------------------\n
      "
         )
     }
