@@ -64,13 +64,13 @@ impl BankAccount {
             "Hey {},pour l'ouverture de votre compte vous devez préciser le montant à placer ainsi que le type de compte:",
             user.as_ref().unwrap().username
         );
-        let mut balance = String::from("0.0");
+        let mut balance = String::new();
         let mut account_type = String::new();
         println!("Quel montant voulez-vous placez sur votre compte?");
         stdin().read_line(&mut balance).unwrap();
         println!("Quel est le type du compte ? (épargne, livret A,...)");
         stdin().read_line(&mut account_type).unwrap();
-        BankAccount::new(user, client, account_type, balance.parse::<f32>().unwrap());
+        BankAccount::new(user, client, account_type, balance.trim().parse::<f32>().expect("nothing"));
         show_menu(user, client)
     }
 }
