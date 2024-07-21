@@ -7,11 +7,11 @@ pub use std::io::stdin;
 
 #[derive(Debug, FromSqlRow)]
 pub struct User {
-    id: i32,
-    first_name: Option<String>,
-    last_name: Option<String>,
-    username: String,
-    password: String,
+    pub id: i32,
+    pub first_name: Option<String>,
+    pub last_name: Option<String>,
+    pub username: String,
+    pub password: String,
 }
 
 impl User {
@@ -89,7 +89,7 @@ impl User {
                             username: db_username.to_string(),
                             password: db_password.to_string(),
                         };
-                        show_menu(&Some(current_user), client)
+                        show_menu(&mut Some(current_user), client)
                     }
                     Err(_) => {
                         println!("Invalid username or password");
@@ -103,7 +103,7 @@ impl User {
         Ok(())
     }
 
-    pub fn register(user: &Option<User>, client: &mut Client) {
+    pub fn register(user: &mut Option<User>, client: &mut Client) {
         let mut first_name = String::new();
         let mut last_name = String::new();
         println!("What username for you new user ?");
@@ -136,7 +136,7 @@ impl User {
         show_menu(user, client)
     }
 
-    pub fn login(user: &Option<User>, client: &mut Client) {
+    pub fn login(user: &mut Option<User>, client: &mut Client) {
         println!("Username ?");
         let mut username = String::new();
         stdin().read_line(&mut username).unwrap();
