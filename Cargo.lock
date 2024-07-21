@@ -55,6 +55,7 @@ version = "0.1.0"
 dependencies = [
  "postgres",
  "postgres_query",
+ "rand 0.8.5",
  "sha-crypt",
 ]
 
