@@ -1,10 +1,13 @@
+mod bank;
 mod user;
-use std::io::{stdin};
+
+use crate::bank::BankAccount;
+use crate::user::User;
 use postgres;
 use postgres::{Client, NoTls};
-use crate::user::User;
+use std::io::stdin;
 
-fn show_menu(user: &Option<User>,client: &mut Client){
+fn show_menu(user: &mut Option<User>, client: &mut Client) {
     if user.is_none() {
         println!(
             "\n
@@ -14,11 +17,11 @@ fn show_menu(user: &Option<User>,client: &mut Client){
         --------------------\n
      "
         )
-    }else {
+    } else {
         println!(
             "\n
         ---------------------------\n
-        | 1:Create bank account   |\n
+        | 1:Créer compte bancaire |\n
         | 2:Remove a todo         |\n
         | 3:Edit a todo           |\n
         | 4:Show todolist         |\n
@@ -28,44 +31,42 @@ fn show_menu(user: &Option<User>,client: &mut Client){
      "
         )
     }
-    select_option(user,client)
+    select_option(user, client)
 }
 
-fn select_option(user: &Option<User>, mut client: &mut Client){
+fn select_option(user: &mut Option<User>, mut client: &mut Client) {
     let mut choice = String::new();
     stdin().read_line(&mut choice).expect("Mauvaise saisie");
     if user.is_none() {
         match choice.as_str().trim() {
-            "1"=>User::login(&user,&mut client),
-            "2"=>User::register(&user,&mut client),
+            "1" => User::login(user, &mut client),
+            "2" => User::register(user, &mut client),
             _ => {
                 println!("Choisissez un nombre valide");
-                select_option(&user,client)
+                select_option(user, client)
             }
         }
-    }else {
+    } else {
         match choice.as_str().trim() {
-            "1"=>User::register(&user,&mut client),
-            "2"=>User::register(&user,&mut client),
-            "3"=>User::register(&user,&mut client),
-            "4"=>User::register(&user,&mut client),
-            "5"=>User::register(&user,&mut client),
-            "6"=>User::register(&user,&mut client),
+            "1" => BankAccount::create_bank_account(user, &mut client),
+            "2" => User::register(user, &mut client),
+            "3" => User::register(user, &mut client),
+            "4" => User::register(user, &mut client),
+            "5" => User::register(user, &mut client),
+            "6" => User::register(user, &mut client),
             _ => {
                 println!("Choisissez un nombre valide");
-                select_option(&user,client)
+                select_option(user, client)
             }
         }
     }
 }
 
-
 fn main() {
-    let current_user:Option<User> = None;
-    let mut client =
-        Client::connect("postgresql://bankinguser:postgres@localhost/banking",NoTls)
-            .expect("No connection");
+    let mut current_user: Option<User> = None;
+    let mut client = Client::connect("postgresql://bankinguser:postgres@localhost/banking", NoTls)
+        .expect("No connection");
     println!("Bienvenue dans votre application bancaire !");
-    show_menu(&current_user, &mut client);
-    select_option(&current_user,&mut client);
+    show_menu(&mut current_user, &mut client);
+    select_option(&mut current_user, &mut client);
 }
